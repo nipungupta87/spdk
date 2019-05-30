@@ -1,0 +1,13 @@
+example command:
+./examples/nvme/perf/perf_eth_io -q 128 -s 1024 -w write -t 10 -c 0xF -o 4096 -r 'trtype:PCIe traddr:0000:01:00.0'
+
+This will write packets from the network (dpdk port 0) to nvme for 60 seconds. After this it reads them from nvme
+drive and push them our of the network interface.
+
+Limitations:
+- coremask should be consequent cores starting core 0
+- -w parameter though requried but is not used. App operates as following - first write to nvme then read from nvme
+- The threads start execution (and time slot starts) only when first packet is received. First packet does not gets
+  written into the driver (as it is only PoC).
+- Packets are expected to be continuously sent to all the cores with distribution. Packets are processed in burst
+  of 128 and will get stuck in permenent loop (to receive packets) if packets are not sent.

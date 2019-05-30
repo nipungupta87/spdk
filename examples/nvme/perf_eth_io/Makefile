@@ -1,8 +1,7 @@
 #
 #  BSD LICENSE
 #
-#  Copyright (c) Intel Corporation.
-#  All rights reserved.
+#  Copyright 2019 NXP
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions
@@ -14,7 +13,7 @@
 #      notice, this list of conditions and the following disclaimer in
 #      the documentation and/or other materials provided with the
 #      distribution.
-#    * Neither the name of Intel Corporation nor the names of its
+#    * Neither the name of NXP nor the names of its
 #      contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
 #
@@ -31,17 +30,29 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SPDK_ROOT_DIR := $(abspath $(CURDIR)/../..)
-include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
+SPDK_ROOT_DIR := $(abspath $(CURDIR)/../../..)
 
-DIRS-y += hello_world identify perf perf_eth_io reserve nvme_manage arbitration \
-	hotplug cmb_copy
+APP = perf_eth_io
 
-DIRS-$(CONFIG_FIO_PLUGIN) += fio_plugin
+ifeq ($(OS),Linux)
+SYS_LIBS += -laio
+CFLAGS += -DHAVE_LIBAIO
+endif
 
-.PHONY: all clean $(DIRS-y)
+ifeq ($(CONFIG_URING),y)
+SYS_LIBS += -luring
+CFLAGS += -DHAVE_URING
+ifeq ($(strip $(CONFIG_URING_PATH)),)
+else
+CFLAGS += -I$(CONFIG_URING_PATH)
+LDFLAGS += -L$(CONFIG_URING_PATH)
+endif
+endif
 
-all: $(DIRS-y)
-clean: $(DIRS-y)
+install: $(APP)
+	$(INSTALL_EXAMPLE)
 
-include $(SPDK_ROOT_DIR)/mk/spdk.subdirs.mk
+uninstall:
+	$(UNINSTALL_EXAMPLE)
+
+include $(SPDK_ROOT_DIR)/mk/nvme.libtest.mk
